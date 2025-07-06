@@ -1,0 +1,79 @@
+This project is EVM networks indexer solution
+
+It's goal is to be run manually on VM or locally, with indexing blockchains data in one of implemented sources.
+
+It can be think of SQUID SDK for local indexers, but it fetches data manually through Node RPCs.
+
+
+## Main components
+
+This section describes main components of the project.
+
+### Data access API
+
+For data access you can use:
+* HTTP server that provides API for data access.
+* WebSockets server for real-time subscriptions.
+
+*Note:* In case using websockets for HFT additional configuration may be needed for MemPool access.
+
+### Indexer
+
+Indexer fetches blockchain data trough Node RPC and stores it in the database.
+
+Default database is PostgreSQL, but later it's planned to support other databases for different use cases.
+
+### Configuration
+
+The idea of this project is to be able to setup local data source for blockchains data easily, by just
+specifying all your needs using some configuration file.
+
+You can configure indexer using `config.json` file.
+
+**How to use config file?**
+
+Config file is a JSON with following structure:
+
+```json
+{
+    "api": {
+        "port": "number",
+        "host": "string",
+        "ws": {
+            "port": "number", 
+            "host": "string"
+        },
+        "api_key": "string"
+    },
+    "storages": [
+        {
+            "name": "string",
+            "storage_type": "string",
+            "config": {
+                "connection_string": "string"
+            },
+            "indexers": [
+                {
+                    "indexer_type": "blocks | transactions | pools",
+                    "keep_alive": "string",
+                    "start_block": "number",
+                    "end_block": "number"
+                }
+            ]
+        }
+    ],
+    "blockchains": [
+        {
+            "name": "string",
+            "rpc": "string",
+            "start_block": "number",
+            "end_block": "number", 
+            "batch_size": "number",
+            "update_frequency": "each_block | once",
+            "storages": [
+                "string"
+            ]
+        }
+    ]
+}
+```

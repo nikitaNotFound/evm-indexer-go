@@ -1,0 +1,41 @@
+This file describes the functionality of the v0.1.0 release.
+
+## v0.1.0
+
+Main goal of this release is provide basic functionality for indexing fundamental DeFi data for EVM networks into PostgreSQL database, which will be exposed via HTTP API.
+
+Next sections are separate detailed description of functional and non-functional features.
+
+
+## Indexing data
+
+As for initial release just simple solution will be implemented. It will not be configurable, as it will be in future, but at least it should
+support configuration for range of blocks to index, as well as specifying connection string to PostgreSQL which will be used for storing data.
+
+
+### Configuration
+
+- Ability to specify connection string to PostgreSQL database which will be used for storing data.
+
+- Ability to specify range of blocks to index.
+
+### Blocks 
+
+Indexing blocks with timestamps, gas price, total fees and builder info.
+
+### Transactions
+
+Indexing transactions with basic data, such as from_address, to_address, value, gas, priority fee and calldata.
+
+### Pools
+
+Indexing pools for Uniswap V2 and V3. Store basic info from DEX contract.
+
+
+## HTTP API
+
+Simple HTTP API that exposes endpoints for:
+
+- Receiving blocks data by number.
+- Receiving transactions data by hash.
+- Receiving all indexed pools.
