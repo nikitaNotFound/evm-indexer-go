@@ -62,18 +62,16 @@ Config file is a JSON with following structure:
             ]
         }
     ],
-    "blockchains": [
-        {
-            "name": "string",
-            "rpc": "string",
-            "start_block": "number",
-            "end_block": "number", 
-            "batch_size": "number",
-            "update_frequency": "each_block | once",
-            "storages": [
-                "string"
-            ]
-        }
-    ]
+    "network": {
+        "name": "string",
+        "rpc": "string",
+        "start_block": "number",
+        "end_block": "number", 
+        "batch_size": "number",
+        "update_frequency": "each_block | once",
+        "storages": [
+            "string"
+        ]
+    }
 }
 ```
