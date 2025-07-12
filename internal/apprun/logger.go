@@ -3,9 +3,10 @@ package apprun
 import (
 	"os"
 
-	"github.com/nikitaNotFound/evm-indexer-go/internal/core/config"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/nikitaNotFound/evm-indexer-go/internal/config"
 )
 
 func setupLogger(cfg *config.Config) {
