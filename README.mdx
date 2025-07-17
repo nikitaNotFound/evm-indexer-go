@@ -45,26 +45,12 @@ Config file is a JSON with following structure:
         },
         "api_key": "string"
     },
-    "storages": [
-        {
-            "name": "string",
-            "storage_type": "string",
-            "config": {
-                "connection_string": "string"
-            },
-            "indexers": [
-                {
-                    "indexer_type": "blocks | transactions | pools",
-                    "keep_alive": "string",
-                    "start_block": "number",
-                    "end_block": "number"
-                }
-            ]
-        }
-    ],
+    "pg_storage": {
+        "connection_string": "string"
+    },
     "network": {
         "name": "string",
-        "rpc": "string",
+        "rpc_url": "string",
         "start_block": "number",
         "end_block": "number", 
         "batch_size": "number",

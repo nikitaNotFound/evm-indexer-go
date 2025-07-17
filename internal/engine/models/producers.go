@@ -1,6 +1,8 @@
 package models
 
-import "time"
+import (
+	"time"
+)
 
 type DataProduceTriggerType string
 
@@ -11,8 +13,8 @@ const (
 
 type DataProduceTrigger struct {
 	TriggerType DataProduceTriggerType
-	StartBlock  uint64
-	EndBlock    uint64
+	StartBlock  int64
+	EndBlock    int64
 }
 
 type ProducedDataEvent struct {

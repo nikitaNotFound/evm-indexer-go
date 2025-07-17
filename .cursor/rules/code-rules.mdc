@@ -1,0 +1,21 @@
+---
+description: 
+globs: 
+alwaysApply: true
+---
+1. Handle and log all erorrs. Business layer services should return custom errors, that can be later identified by API layer.
+2. Use short and clear naming. If some word can shorter and still understandable - use short version. For example `tx` instead of `transaction`.
+3. Do not use `Get` prefix in naming. For example, instead of `GetUserTransactions` use `UserTransactions`.
+4. Always add comment on top of function that shortly describes it propose.
+5. No need to create comments for code that is clear. For example, no need to add comment `Creating slice for ...` for code with slice initialization.
+6. Always use populate by index approach for slices if possible instead of `append` function.
+7. Use nested zerolog instances for functions with detailed context. For example:
+```
+func SomeComplexLogic(userID string) error {
+    l := log.With().Str("service", "user").Str("method", "SomeComplexLogic").Str("user_id", userID).Logger()
+	l.Debug().Msg("Preparing to do complex logic")
+
+    ... // Use this `l` everywhere in this function for logging
+}
+```
+8. Do not log errors using %s, use `.Err(err)` method of zerolog

@@ -1,0 +1,9 @@
+---
+description: Git Commit changes rules
+globs: 
+alwaysApply: false
+---
+1. Analyze all current git staged changes in my repo with `git diff --staged`.
+2. Create commit. It's message shoud contain numbered list with detailed description what was done in scope of this commit. Be careful, commit message should be well formatted so it would be comfortable to read in GitHub or GitLab.
+3. No need to run `git add .`. Just run `git commit` with your generated message.
+4. Split messages with -m instead of \n

@@ -1,6 +1,7 @@
 package engine
 
 import (
+	"context"
 	"errors"
 	"sync"
 
@@ -14,27 +15,39 @@ var (
 )
 
 type TopicSubscriber interface {
-	OnDataEvent(topic string, event models.ProducedDataEvent) error
+	OnDataEvent(ctx context.Context, topic string, event models.ProducedDataEvent) error
 }
 
 type IndexersGate struct {
 	topicSubs map[string][]TopicSubscriber
+	ctx       context.Context
+	cancel    context.CancelFunc
 
-	mu sync.RWMutex
-
-	wg sync.WaitGroup
+	mu              sync.RWMutex
+	consumeEventsWG sync.WaitGroup
 }
 
+// NewIndexersGate creates a new indexers gate
 func NewIndexersGate() *IndexersGate {
+	ctx, cancel := context.WithCancel(context.Background())
 	return &IndexersGate{
-		topicSubs: map[string][]TopicSubscriber{},
-		wg:        sync.WaitGroup{},
-		mu:        sync.RWMutex{},
+		topicSubs:       map[string][]TopicSubscriber{},
+		consumeEventsWG: sync.WaitGroup{},
+		mu:              sync.RWMutex{},
+		ctx:             ctx,
+		cancel:          cancel,
 	}
 }
 
+// Stop stops the indexers gate
+func (g *IndexersGate) Stop() {
+	g.cancel()
+	g.consumeEventsWG.Wait()
+}
+
+// WaitFinish waits for all events to be consumed
 func (g *IndexersGate) WaitFinish() {
-	g.wg.Wait()
+	g.consumeEventsWG.Wait()
 }
 
 func (g *IndexersGate) topicExists(topic string) bool {
@@ -43,6 +56,7 @@ func (g *IndexersGate) topicExists(topic string) bool {
 	return g.topicSubs[topic] != nil
 }
 
+// CreateTopic creates a new topic
 func (g *IndexersGate) CreateTopic(topic string) error {
 	if g.topicExists(topic) {
 		return ErrTopicAlreadyExists
@@ -56,6 +70,7 @@ func (g *IndexersGate) CreateTopic(topic string) error {
 	return nil
 }
 
+// Subscribe subscribes a new subscriber to a topic
 func (g *IndexersGate) Subscribe(topic string, subscriber TopicSubscriber) error {
 	if !g.topicExists(topic) {
 		return ErrTopicNotFound
@@ -69,17 +84,18 @@ func (g *IndexersGate) Subscribe(topic string, subscriber TopicSubscriber) error
 	return nil
 }
 
+// BroadcastDataEvent broadcasts a data event to all subscribers of a topic
 func (g *IndexersGate) BroadcastDataEvent(topic string, data models.ProducedDataEvent) error {
 	if !g.topicExists(topic) {
 		return ErrTopicNotFound
 	}
 
 	for _, subscriber := range g.topicSubs[topic] {
-		g.wg.Add(1)
+		g.consumeEventsWG.Add(1)
 		go func(subscriber TopicSubscriber) {
-			defer g.wg.Done()
+			defer g.consumeEventsWG.Done()
 
-			if err := subscriber.OnDataEvent(topic, data); err != nil {
+			if err := subscriber.OnDataEvent(g.ctx, topic, data); err != nil {
 				log.Error().Err(err).Msg("failed to broadcast data event")
 			}
 		}(subscriber)

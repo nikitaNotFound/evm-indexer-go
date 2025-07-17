@@ -47,6 +47,10 @@ func (e *Engine) Start(ctx context.Context) error {
 	return nil
 }
 
+func (e *Engine) Stop() {
+	e.indexersGate.Stop()
+}
+
 func (e *Engine) initialSync(ctx context.Context) error {
 	l := log.With().Str("component", "Engine").Str("method", "initialSync").Logger()
 	errGroup := new(errgroup.Group)
