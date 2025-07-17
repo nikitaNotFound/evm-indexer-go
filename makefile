@@ -1,4 +1,4 @@
-.PHONY: run build test lint fmt install-tools clean
+.PHONY: run build test lint fmt install-tools clean check-line-length
 
 run:
 	go run .
@@ -31,6 +31,11 @@ lint:
 lint-fix:
 	@echo "Fixing linting issues..."
 	@golangci-lint run --fix
+
+# Check line length specifically
+check-line-length:
+	@echo "Checking line length (max 100 characters)..."
+	@golangci-lint run --disable-all --enable=lll
 
 clean:
 	@rm -rf bin/
