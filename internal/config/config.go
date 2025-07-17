@@ -1,13 +1,19 @@
 package config
 
 type NetworkConfig struct {
-	StartBlock uint64
-	EndBlock   uint64
+	StartBlock int64
+	EndBlock   int64
+	RpcUrl     string
+}
+
+type PGStorageConfig struct {
+	ConnectionString string
 }
 
 type Config struct {
 	NetworkConfig NetworkConfig
 	isDebug       bool
+	PGStorage     PGStorageConfig
 }
 
 func ParseConfig() (*Config, error) {

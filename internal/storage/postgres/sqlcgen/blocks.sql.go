@@ -9,13 +9,28 @@ import (
 	"context"
 )
 
+const addBlock = `-- name: AddBlock :exec
+INSERT INTO blocks (number, hash, timestamp) VALUES ($1, $2, $3)
+`
+
+type AddBlockParams struct {
+	Number    int64  `json:"number"`
+	Hash      string `json:"hash"`
+	Timestamp int64  `json:"timestamp"`
+}
+
+func (q *Queries) AddBlock(ctx context.Context, arg AddBlockParams) error {
+	_, err := q.db.ExecContext(ctx, addBlock, arg.Number, arg.Hash, arg.Timestamp)
+	return err
+}
+
 const getBlockByNumber = `-- name: GetBlockByNumber :one
-SELECT number, timestamp FROM blocks WHERE number = $1
+SELECT number, hash, timestamp FROM blocks WHERE number = $1
 `
 
 func (q *Queries) GetBlockByNumber(ctx context.Context, number int64) (*Block, error) {
 	row := q.db.QueryRowContext(ctx, getBlockByNumber, number)
 	var i Block
-	err := row.Scan(&i.Number, &i.Timestamp)
+	err := row.Scan(&i.Number, &i.Hash, &i.Timestamp)
 	return &i, err
 }

@@ -5,6 +5,7 @@
 package sqlcgen
 
 type Block struct {
-	Number    int64 `json:"number"`
-	Timestamp int64 `json:"timestamp"`
+	Number    int64  `json:"number"`
+	Hash      string `json:"hash"`
+	Timestamp int64  `json:"timestamp"`
 }
