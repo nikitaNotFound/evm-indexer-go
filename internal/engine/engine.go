@@ -2,7 +2,6 @@ package engine
 
 import (
 	"context"
-	"time"
 
 	"github.com/rs/zerolog/log"
 	"golang.org/x/sync/errgroup"
@@ -20,7 +19,7 @@ type Engine struct {
 type EngineCtx struct {
 	Engine        *Engine
 	Ctx           context.Context
-	BroadcastData func(topic string, data interface{}) error
+	BroadcastData func(ctx context.Context, topic string, event models.ProducedDataEvent) error
 }
 
 func CreateEngine(cfg *config.Config, dp []DataProducer) Engine {
@@ -56,31 +55,16 @@ func (e *Engine) initialSync(ctx context.Context) error {
 	errGroup := new(errgroup.Group)
 
 	engineCtx := EngineCtx{
-		Engine: e,
-		Ctx:    ctx,
-		BroadcastData: func(topic string, data interface{}) error {
-			select {
-			case <-ctx.Done():
-				return ctx.Err()
-			default:
-			}
-
-			event := models.ProducedDataEvent{
-				Data:      data,
-				Timestamp: time.Now(),
-				Trigger:   models.InitialTrigger,
-			}
-
-			return e.indexersGate.BroadcastDataEvent(topic, event)
-		},
+		Engine:        e,
+		Ctx:           ctx,
+		BroadcastData: e.indexersGate.BroadcastDataEvent,
 	}
 
 	for _, p := range e.dataProducers {
 		errGroup.Go(func() error {
 			if err := p.OnProduce(engineCtx, models.DataProduceTrigger{
-				TriggerType: models.InitialTrigger,
-				StartBlock:  e.cfg.NetworkConfig.StartBlock,
-				EndBlock:    e.cfg.NetworkConfig.EndBlock,
+				StartBlock: e.cfg.NetworkConfig.StartBlock,
+				EndBlock:   e.cfg.NetworkConfig.EndBlock,
 			}); err != nil {
 				l.Error().Err(err).Msg("data produced returned error")
 				return err

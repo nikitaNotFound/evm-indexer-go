@@ -6,18 +6,27 @@ import (
 	"fmt"
 	"net/url"
 	"strings"
+	"time"
 
-	"github.com/nikitaNotFound/evm-indexer-go/internal/storage/postgres/sqlcgen"
+	"github.com/nikitaNotFound/evm-indexer-go/internal/storages/postgres/sqlcgen"
 	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 type options struct {
 	createDBIfNotExists bool
+	maxOpenConns        int
+	maxIdleConns        int
+	connMaxLifetime     time.Duration
+	connMaxIdleTime     time.Duration
 }
 
 func defaultOptions() *options {
 	return &options{
 		createDBIfNotExists: false,
+		maxOpenConns:        25,              // Max 25 open connections
+		maxIdleConns:        5,               // Keep 5 idle connections
+		connMaxLifetime:     5 * time.Minute, // Connections live for 5 minutes max
+		connMaxIdleTime:     1 * time.Minute, // Idle connections timeout after 1 minute
 	}
 }
 
@@ -29,9 +38,24 @@ func WithCreateDBIfNotExists() Option {
 	}
 }
 
+// WithMaxOpenConns sets the maximum number of open connections
+func WithMaxOpenConns(maxOpen int) Option {
+	return func(o *options) {
+		o.maxOpenConns = maxOpen
+	}
+}
+
+// WithMaxIdleConns sets the maximum number of idle connections
+func WithMaxIdleConns(maxIdle int) Option {
+	return func(o *options) {
+		o.maxIdleConns = maxIdle
+	}
+}
+
 type Storage struct {
 	Queries *sqlcgen.Queries
 	db      *sql.DB
+	dsn     string
 }
 
 func NewStorage(dsn string, opts ...Option) (*Storage, error) {
@@ -47,19 +71,21 @@ func NewStorage(dsn string, opts ...Option) (*Storage, error) {
 	}
 
 	db := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(dsn)))
-
-	// Run migrations after database is ensured to exist
-	if opt.createDBIfNotExists {
-		if err := migrateDb(db); err != nil {
-			db.Close()
-			return nil, fmt.Errorf("failed to migrate database: %w", err)
-		}
-	}
+	db.SetMaxOpenConns(opt.maxOpenConns)
+	db.SetMaxIdleConns(opt.maxIdleConns)
+	db.SetConnMaxLifetime(opt.connMaxLifetime)
+	db.SetConnMaxIdleTime(opt.connMaxIdleTime)
 
 	return &Storage{
 		Queries: sqlcgen.New(db),
 		db:      db,
+		dsn:     dsn,
 	}, nil
+}
+
+// PoolStats returns connection pool statistics
+func (s *Storage) PoolStats() sql.DBStats {
+	return s.db.Stats()
 }
 
 func (s *Storage) Close() error {
@@ -90,30 +116,26 @@ func (s *Storage) Ping() error {
 }
 
 func (s *Storage) Migrate() error {
-	return migrateDb(s.db)
+	return migrateDb(s.dsn)
 }
 
 // createDatabaseIfNotExists parses the DSN, connects to PostgreSQL without specifying
 // the target database, checks if the database exists, and creates it if it doesn't
 func createDatabaseIfNotExists(dsn string) error {
-	// Parse the DSN to extract database name
 	dbName, adminDSN, err := parseDSNForDBCreation(dsn)
 	if err != nil {
 		return fmt.Errorf("failed to parse DSN: %w", err)
 	}
 
-	// Connect to PostgreSQL without specifying target database
 	adminDB := sql.OpenDB(pgdriver.NewConnector(pgdriver.WithDSN(adminDSN)))
 	defer adminDB.Close()
 
-	// Check if database exists
 	exists, err := databaseExists(adminDB, dbName)
 	if err != nil {
 		return fmt.Errorf("failed to check if database exists: %w", err)
 	}
 
 	if !exists {
-		// Create the database
 		query := fmt.Sprintf("CREATE DATABASE %s", dbName)
 		_, err := adminDB.Exec(query)
 		if err != nil {
@@ -127,19 +149,16 @@ func createDatabaseIfNotExists(dsn string) error {
 // parseDSNForDBCreation extracts the database name and creates an admin DSN
 // that connects to the 'postgres' database instead
 func parseDSNForDBCreation(dsn string) (dbName, adminDSN string, err error) {
-	// Parse the DSN URL
 	u, err := url.Parse(dsn)
 	if err != nil {
 		return "", "", err
 	}
 
-	// Extract database name from path (remove leading slash)
 	dbName = strings.TrimPrefix(u.Path, "/")
 	if dbName == "" {
 		return "", "", fmt.Errorf("no database name found in DSN")
 	}
 
-	// Create admin DSN by changing the database to 'postgres'
 	adminURL := *u
 	adminURL.Path = "/postgres"
 	adminDSN = adminURL.String()

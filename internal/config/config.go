@@ -1,23 +1,57 @@
 package config
 
+import (
+	"encoding/json"
+	"os"
+	"time"
+
+	"github.com/go-playground/validator/v10"
+)
+
 type NetworkConfig struct {
-	StartBlock int64
-	EndBlock   int64
-	RpcUrl     string
+	StartBlock int64  `json:"start_block" validate:"min=0"`
+	EndBlock   int64  `json:"end_block" validate:"min=0"`
+	RpcUrl     string `json:"rpc_url" validate:"required,url"`
 }
 
 type PGStorageConfig struct {
-	ConnectionString string
+	ConnectionString    string `json:"connection_string" validate:"required,url"`
+	CreateDBIfNotExists bool   `json:"create_db_if_not_exists"`
+
+	// Connection Pool Settings
+	MaxOpenConns    int
+	MaxIdleConns    int
+	ConnMaxLifetime time.Duration
+	ConnMaxIdleTime time.Duration
 }
 
 type Config struct {
-	NetworkConfig NetworkConfig
+	NetworkConfig NetworkConfig   `json:"network_config" validate:"required"`
+	PGStorage     PGStorageConfig `json:"pg_storage_config" validate:"required"`
 	isDebug       bool
-	PGStorage     PGStorageConfig
 }
 
+// ParseConfig reads and validates configuration from config.json file
 func ParseConfig() (*Config, error) {
-	return &Config{}, nil
+	data, err := os.ReadFile("config.json")
+	if err != nil {
+		return nil, err
+	}
+
+	var config Config
+	if err := json.Unmarshal(data, &config); err != nil {
+		return nil, err
+	}
+
+	// Set default values
+	config.PGStorage.CreateDBIfNotExists = true
+
+	validator := validator.New()
+	if err := validator.Struct(config); err != nil {
+		return nil, err
+	}
+
+	return &config, nil
 }
 
 func (c *Config) IsDebug() bool {

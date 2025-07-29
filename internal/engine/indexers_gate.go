@@ -85,7 +85,11 @@ func (g *IndexersGate) Subscribe(topic string, subscriber TopicSubscriber) error
 }
 
 // BroadcastDataEvent broadcasts a data event to all subscribers of a topic
-func (g *IndexersGate) BroadcastDataEvent(topic string, data models.ProducedDataEvent) error {
+func (g *IndexersGate) BroadcastDataEvent(
+	ctx context.Context,
+	topic string,
+	data models.ProducedDataEvent,
+) error {
 	if !g.topicExists(topic) {
 		return ErrTopicNotFound
 	}

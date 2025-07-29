@@ -6,9 +6,10 @@ import (
 
 	"github.com/nikitaNotFound/evm-indexer-go/internal/engine/models"
 	"github.com/nikitaNotFound/evm-indexer-go/internal/producers"
-	"github.com/nikitaNotFound/evm-indexer-go/internal/storage/postgres"
-	"github.com/nikitaNotFound/evm-indexer-go/internal/storage/postgres/sqlcgen"
+	"github.com/nikitaNotFound/evm-indexer-go/internal/storages/postgres"
+	"github.com/nikitaNotFound/evm-indexer-go/internal/storages/postgres/sqlcgen"
 	"github.com/rs/zerolog/log"
+	"github.com/uptrace/bun/driver/pgdriver"
 )
 
 type BlocksIndexer struct {
@@ -38,6 +39,12 @@ func (i *BlocksIndexer) OnDataEvent(
 		Hash:      blockInfo.Hash,
 		Timestamp: 0,
 	}); err != nil {
+		if pgerr, ok := err.(pgdriver.Error); ok && pgerr.IntegrityViolation() {
+			l.Warn().Int64("block_number", blockInfo.Number).
+				Str("block_hash", blockInfo.Hash).
+				Msg("block already exists")
+			return nil
+		}
 		return fmt.Errorf("failed to add block: %w", err)
 	}
 

@@ -12,7 +12,10 @@ import (
 	"github.com/rs/zerolog/log"
 )
 
-const TopicName = "blocks"
+const (
+	BlocksTopicName = "blocks"
+	RawTxsTopicName = "raw_txs"
+)
 
 var (
 	ErrInvalidBlockRange = errors.New("invalid block range")
@@ -31,6 +34,7 @@ type Block struct {
 	Hash   string
 }
 
+// TODO: refactor to use shared workpool for blocks producer
 func (p *BlocksProducer) OnProduce(
 	e engine.EngineCtx,
 	trigger models.DataProduceTrigger,
@@ -68,7 +72,13 @@ func (p *BlocksProducer) handleBatchLoad(
 
 	go func() {
 		for block := range workPool.Results() {
-			if err := e.BroadcastData(TopicName, block); err != nil {
+			l.Info().Int64("block_number", block.Number).
+				Str("block_hash", block.Hash).
+				Msg("broadcasting block")
+			if err := e.BroadcastData(
+				e.Ctx, BlocksTopicName,
+				models.NewProducedDataEvent(block),
+			); err != nil {
 				l.Error().Err(err).Msg("failed to broadcast data")
 			}
 		}
@@ -87,10 +97,14 @@ func (p *BlocksProducer) handleSingleLoad(
 
 	block, err := p.loadBlockInfo(trigger.StartBlock, e.Ctx)
 	if err != nil {
+		l.Error().Err(err).Msg("failed to load block info from node")
 		return err
 	}
 
-	if err := e.BroadcastData(TopicName, block); err != nil {
+	if err := e.BroadcastData(
+		e.Ctx, BlocksTopicName,
+		models.NewProducedDataEvent(block),
+	); err != nil {
 		l.Error().Err(err).Msg("failed to broadcast data")
 		return err
 	}
@@ -102,10 +116,16 @@ func (p *BlocksProducer) loadBlockInfo(
 	blockNumber int64,
 	ctx context.Context,
 ) (*Block, error) {
+	l := log.With().Str("component", "BlocksProducer").Str("method", "loadBlockInfo").Logger()
 	block, err := p.ethClient.BlockByNumber(ctx, big.NewInt(blockNumber))
 	if err != nil {
+		l.Error().Err(err).Msg("failed to load block info from node")
 		return nil, err
 	}
+
+	l.Info().Int64("block_number", blockNumber).
+		Str("block_hash", block.Hash().Hex()).
+		Msg("block info loaded from node")
 
 	return &Block{Number: int64(blockNumber), Hash: block.Hash().Hex()}, nil
 }

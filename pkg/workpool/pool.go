@@ -54,7 +54,7 @@ func NewWorkPool[T any](workersCount int, opts ...Option) *WorkPool[T] {
 		resCh:    make(chan T),
 	}
 
-	for i := 0; i < workersCount; i++ {
+	for range workersCount {
 		go p.startWorker(opt.ctx)
 	}
 
@@ -106,8 +106,12 @@ func (p *WorkPool[T]) processWork(work func() (T, error)) {
 
 	res, err := work()
 	if err != nil {
-		p.errCh <- err
+		go func() {
+			p.errCh <- err
+		}()
 	} else {
-		p.resCh <- res
+		go func() {
+			p.resCh <- res
+		}()
 	}
 }

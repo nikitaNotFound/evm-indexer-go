@@ -6,11 +6,6 @@ import (
 
 type DataProduceTriggerType string
 
-const (
-	InitialTrigger   DataProduceTriggerType = "initial"
-	EachBlockTrigger DataProduceTriggerType = "each_block"
-)
-
 type DataProduceTrigger struct {
 	TriggerType DataProduceTriggerType
 	StartBlock  int64
@@ -18,7 +13,17 @@ type DataProduceTrigger struct {
 }
 
 type ProducedDataEvent struct {
-	Data      interface{}
-	Timestamp time.Time
-	Trigger   DataProduceTriggerType
+	Data         interface{}
+	timestampUtc time.Time
+}
+
+func (e *ProducedDataEvent) TimestampUTC() time.Time {
+	return e.timestampUtc
+}
+
+func NewProducedDataEvent(data interface{}) ProducedDataEvent {
+	return ProducedDataEvent{
+		Data:         data,
+		timestampUtc: time.Now().UTC(),
+	}
 }
