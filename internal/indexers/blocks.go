@@ -27,8 +27,6 @@ func (i *BlocksIndexer) OnDataEvent(
 ) error {
 	l := log.With().Str("component", "BlocksIndexer").Str("method", "OnDataEvent").Logger()
 
-	l.Info().Str("topic", topic).Interface("data", data).Msg("blocks indexer received data")
-
 	blockInfo, ok := data.Data.(*producers.Block)
 	if !ok {
 		return fmt.Errorf("invalid data type: %T", data)
@@ -37,7 +35,7 @@ func (i *BlocksIndexer) OnDataEvent(
 	if err := i.pgStorage.Queries.AddBlock(ctx, sqlcgen.AddBlockParams{
 		Number:    blockInfo.Number,
 		Hash:      blockInfo.Hash,
-		Timestamp: 0,
+		Timestamp: blockInfo.Timestamp,
 	}); err != nil {
 		if pgerr, ok := err.(pgdriver.Error); ok && pgerr.IntegrityViolation() {
 			l.Warn().Int64("block_number", blockInfo.Number).

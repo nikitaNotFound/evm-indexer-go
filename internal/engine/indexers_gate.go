@@ -88,21 +88,23 @@ func (g *IndexersGate) Subscribe(topic string, subscriber TopicSubscriber) error
 func (g *IndexersGate) BroadcastDataEvent(
 	ctx context.Context,
 	topic string,
-	data models.ProducedDataEvent,
+	data []models.ProducedDataEvent,
 ) error {
 	if !g.topicExists(topic) {
 		return ErrTopicNotFound
 	}
 
 	for _, subscriber := range g.topicSubs[topic] {
-		g.consumeEventsWG.Add(1)
-		go func(subscriber TopicSubscriber) {
-			defer g.consumeEventsWG.Done()
+		for _, event := range data {
+			g.consumeEventsWG.Add(1)
+			go func(subscriber TopicSubscriber) {
+				defer g.consumeEventsWG.Done()
 
-			if err := subscriber.OnDataEvent(g.ctx, topic, data); err != nil {
-				log.Error().Err(err).Msg("failed to broadcast data event")
-			}
-		}(subscriber)
+				if err := subscriber.OnDataEvent(g.ctx, topic, event); err != nil {
+					log.Error().Err(err).Msg("failed to broadcast data event")
+				}
+			}(subscriber)
+		}
 	}
 
 	return nil

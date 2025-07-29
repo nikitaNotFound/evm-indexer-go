@@ -9,3 +9,15 @@ type Block struct {
 	Hash      string `json:"hash"`
 	Timestamp int64  `json:"timestamp"`
 }
+
+type RawTx struct {
+	Hash        string `json:"hash"`
+	FromAddress string `json:"from_address"`
+	ToAddress   string `json:"to_address"`
+	Value       string `json:"value"`
+	Timestamp   int64  `json:"timestamp"`
+	BlockNumber int64  `json:"block_number"`
+	InputData   string `json:"input_data"`
+	GasUsed     string `json:"gas_used"`
+	MaxGasPrice string `json:"max_gas_price"`
+}

@@ -19,7 +19,7 @@ type Engine struct {
 type EngineCtx struct {
 	Engine        *Engine
 	Ctx           context.Context
-	BroadcastData func(ctx context.Context, topic string, event models.ProducedDataEvent) error
+	BroadcastData func(ctx context.Context, topic string, data []models.ProducedDataEvent) error
 }
 
 func CreateEngine(cfg *config.Config, dp []DataProducer) Engine {

@@ -2,9 +2,11 @@ package producers
 
 import (
 	"context"
+	"encoding/hex"
 	"errors"
 	"math/big"
 
+	"github.com/ethereum/go-ethereum/core/types"
 	"github.com/ethereum/go-ethereum/ethclient"
 	"github.com/nikitaNotFound/evm-indexer-go/internal/engine"
 	"github.com/nikitaNotFound/evm-indexer-go/internal/engine/models"
@@ -30,8 +32,21 @@ func NewBlocksProducer(ethClient *ethclient.Client) *BlocksProducer {
 }
 
 type Block struct {
-	Number int64
-	Hash   string
+	Number    int64
+	Hash      string
+	Timestamp int64
+}
+
+type RawTx struct {
+	Hash        string
+	FromAddress string
+	ToAddress   string
+	Value       *big.Int
+	Timestamp   int64
+	BlockNumber int64
+	InputData   string
+	GasUsed     uint64
+	MaxGasPrice *big.Int
 }
 
 // TODO: refactor to use shared workpool for blocks producer
@@ -61,30 +76,21 @@ func (p *BlocksProducer) handleBatchLoad(
 	l := log.With().Str("component", "BlocksProducer").Str("method", "handleBatchLoad").Logger()
 
 	// TODO: later load this amount from config
-	workPool := workpool.NewWorkPool[*Block](10)
-	defer workPool.Stop()
+	workPool := workpool.NewWorkPool[*types.Block](10)
 
 	for i := trigger.StartBlock; i <= trigger.EndBlock; i++ {
-		workPool.Do(func() (*Block, error) {
+		workPool.Enqueue(func() (*types.Block, error) {
 			return p.loadBlockInfo(i, e.Ctx)
 		})
 	}
 
-	go func() {
-		for block := range workPool.Results() {
-			l.Info().Int64("block_number", block.Number).
-				Str("block_hash", block.Hash).
-				Msg("broadcasting block")
-			if err := e.BroadcastData(
-				e.Ctx, BlocksTopicName,
-				models.NewProducedDataEvent(block),
-			); err != nil {
-				l.Error().Err(err).Msg("failed to broadcast data")
-			}
-		}
-	}()
+	workPool.WaitAndStop()
 
-	workPool.Wait()
+	for block := range workPool.Results() {
+		if err := p.transformAndBroadcast(e, block); err != nil {
+			l.Error().Err(err).Msg("failed to transform and broadcast block")
+		}
+	}
 
 	return nil
 }
@@ -95,15 +101,80 @@ func (p *BlocksProducer) handleSingleLoad(
 ) error {
 	l := log.With().Str("component", "BlocksProducer").Str("method", "handleSingleLoad").Logger()
 
-	block, err := p.loadBlockInfo(trigger.StartBlock, e.Ctx)
+	blockInfo, err := p.loadBlockInfo(trigger.StartBlock, e.Ctx)
 	if err != nil {
 		l.Error().Err(err).Msg("failed to load block info from node")
 		return err
 	}
 
+	if err := p.transformAndBroadcast(e, blockInfo); err != nil {
+		l.Error().Err(err).Msg("failed to transform and broadcast block")
+		return err
+	}
+
+	return nil
+}
+
+func (p *BlocksProducer) transformAndBroadcast(
+	e engine.EngineCtx,
+	blockInfo *types.Block,
+) error {
+	l := log.With().
+		Str("component", "BlocksProducer").
+		Str("method", "transformAndBroadcast").
+		Int64("block_number", blockInfo.Number().Int64()).
+		Logger()
+
+	blockEvent := &Block{
+		Number:    int64(blockInfo.Number().Int64()),
+		Hash:      blockInfo.Hash().Hex(),
+		Timestamp: blockInfo.ReceivedAt.UTC().Unix(),
+	}
+
+	txDataEvents := make([]models.ProducedDataEvent, len(blockInfo.Transactions()))
+	for i, tx := range blockInfo.Transactions() {
+		fromAddress, err := p.getSenderAddress(tx)
+		if err != nil {
+			l.Error().Err(err).
+				Str("tx_hash", tx.Hash().Hex()).
+				Msg("failed to recover sender address, continuing with empty address")
+			return err
+		}
+
+		// Handle To address (can be nil for contract creation)
+		toAddress := ""
+		if tx.To() != nil {
+			toAddress = tx.To().Hex()
+		}
+
+		txDataEvents[i] = models.NewProducedDataEvent(&RawTx{
+			Hash:        tx.Hash().Hex(),
+			FromAddress: fromAddress,
+			ToAddress:   toAddress,
+			Value:       tx.Value(),
+			Timestamp:   blockInfo.ReceivedAt.UTC().Unix(),
+			BlockNumber: int64(blockInfo.Number().Int64()),
+			InputData:   hex.EncodeToString(tx.Data()),
+			GasUsed:     tx.Gas(),
+			MaxGasPrice: tx.GasPrice(),
+		})
+	}
+
 	if err := e.BroadcastData(
-		e.Ctx, BlocksTopicName,
-		models.NewProducedDataEvent(block),
+		e.Ctx,
+		BlocksTopicName,
+		[]models.ProducedDataEvent{
+			models.NewProducedDataEvent(blockEvent),
+		},
+	); err != nil {
+		l.Error().Err(err).Msg("failed to broadcast data")
+		return err
+	}
+
+	if err := e.BroadcastData(
+		e.Ctx,
+		RawTxsTopicName,
+		txDataEvents,
 	); err != nil {
 		l.Error().Err(err).Msg("failed to broadcast data")
 		return err
@@ -115,7 +186,7 @@ func (p *BlocksProducer) handleSingleLoad(
 func (p *BlocksProducer) loadBlockInfo(
 	blockNumber int64,
 	ctx context.Context,
-) (*Block, error) {
+) (*types.Block, error) {
 	l := log.With().Str("component", "BlocksProducer").Str("method", "loadBlockInfo").Logger()
 	block, err := p.ethClient.BlockByNumber(ctx, big.NewInt(blockNumber))
 	if err != nil {
@@ -123,9 +194,27 @@ func (p *BlocksProducer) loadBlockInfo(
 		return nil, err
 	}
 
-	l.Info().Int64("block_number", blockNumber).
-		Str("block_hash", block.Hash().Hex()).
-		Msg("block info loaded from node")
+	l.Info().Int64("block_number", blockNumber).Msg("block info loaded from node")
 
-	return &Block{Number: int64(blockNumber), Hash: block.Hash().Hex()}, nil
+	return block, nil
+}
+
+// getSenderAddress recovers the sender address from a transaction
+func (p *BlocksProducer) getSenderAddress(tx *types.Transaction) (string, error) {
+	var signer types.Signer
+
+	chainID := tx.ChainId()
+	if chainID == nil || chainID.Sign() == 0 {
+		// For legacy transactions without chain ID, use Homestead signer
+		signer = types.HomesteadSigner{}
+	} else {
+		signer = types.LatestSignerForChainID(chainID)
+	}
+
+	sender, err := types.Sender(signer, tx)
+	if err != nil {
+		return "", err
+	}
+
+	return sender.Hex(), nil
 }

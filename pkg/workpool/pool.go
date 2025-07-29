@@ -13,18 +13,24 @@ type WorkPool[T any] struct {
 	cancel  context.CancelFunc
 
 	workChan chan func() (T, error)
-	wg       sync.WaitGroup
+	wg       *sync.WaitGroup
 	errCh    chan error
 	resCh    chan T
 }
 
 type options struct {
-	ctx context.Context
+	ctx         context.Context
+	errChanSize int
+	resChanSize int
+	poolSize    int
 }
 
 func defaultOptions() *options {
 	return &options{
-		ctx: context.Background(),
+		ctx:         context.Background(),
+		errChanSize: 512,
+		resChanSize: 512,
+		poolSize:    512,
 	}
 }
 
@@ -33,6 +39,24 @@ type Option func(*options)
 func WithContext(ctx context.Context) Option {
 	return func(o *options) {
 		o.ctx = ctx
+	}
+}
+
+func WithErrChanSize(size int) Option {
+	return func(o *options) {
+		o.errChanSize = size
+	}
+}
+
+func WithResChanSize(size int) Option {
+	return func(o *options) {
+		o.resChanSize = size
+	}
+}
+
+func WithPoolSize(size int) Option {
+	return func(o *options) {
+		o.poolSize = size
 	}
 }
 
@@ -49,31 +73,36 @@ func NewWorkPool[T any](workersCount int, opts ...Option) *WorkPool[T] {
 		options:  opt,
 		poolCtx:  poolCtx,
 		cancel:   cancel,
-		workChan: make(chan func() (T, error)),
-		errCh:    make(chan error),
-		resCh:    make(chan T),
+		workChan: make(chan func() (T, error), opt.poolSize),
+		errCh:    make(chan error, opt.errChanSize),
+		resCh:    make(chan T, opt.resChanSize),
+		wg:       &sync.WaitGroup{},
 	}
 
 	for range workersCount {
-		go p.startWorker(opt.ctx)
+		go p.startWorker()
 	}
 
 	return p
 }
 
-// Do is used to submit work to the pool
-func (p *WorkPool[T]) Do(work func() (T, error)) {
+// Enqueue is used to submit work to the pool, potential blocking if the pool is full
+func (p *WorkPool[T]) Enqueue(work func() (T, error)) {
 	p.wg.Add(1)
 	p.workChan <- work
 }
 
-// Wait is used to wait for all work to be completed
-func (p *WorkPool[T]) Wait() {
+// WaitAndStop is used to wait for all work to be completed and then stop the pool
+func (p *WorkPool[T]) WaitAndStop() {
 	p.wg.Wait()
+	p.cancel()
+	close(p.workChan)
+	close(p.errCh)
+	close(p.resCh)
 }
 
-// Stop is used to stop the pool
-func (p *WorkPool[T]) Stop() {
+// InstantStop is used to stop the pool immediately
+func (p *WorkPool[T]) InstantStop() {
 	p.cancel()
 	close(p.workChan)
 	close(p.errCh)
@@ -90,10 +119,10 @@ func (p *WorkPool[T]) Errors() <-chan error {
 	return p.errCh
 }
 
-func (p *WorkPool[T]) startWorker(ctx context.Context) {
+func (p *WorkPool[T]) startWorker() {
 	for {
 		select {
-		case <-ctx.Done():
+		case <-p.poolCtx.Done():
 			return
 		case work := <-p.workChan:
 			p.processWork(work)
@@ -106,12 +135,8 @@ func (p *WorkPool[T]) processWork(work func() (T, error)) {
 
 	res, err := work()
 	if err != nil {
-		go func() {
-			p.errCh <- err
-		}()
+		p.errCh <- err
 	} else {
-		go func() {
-			p.resCh <- res
-		}()
+		p.resCh <- res
 	}
 }

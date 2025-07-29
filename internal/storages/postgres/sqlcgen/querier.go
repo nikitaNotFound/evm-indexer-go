@@ -10,6 +10,7 @@ import (
 
 type Querier interface {
 	AddBlock(ctx context.Context, arg AddBlockParams) error
+	AddRawTx(ctx context.Context, arg AddRawTxParams) error
 	GetBlockByNumber(ctx context.Context, number int64) (*Block, error)
 }
 

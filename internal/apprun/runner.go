@@ -54,6 +54,7 @@ func StartEVMIndexer() {
 
 	blocksProducer := producers.NewBlocksProducer(ethClient)
 	blocksIndexer := indexers.NewBlocksIndexer(pgStorage)
+	rawTxsIndexer := indexers.NewRawTxsIndexer(pgStorage)
 
 	engine := engine.CreateEngine(cfg, []engine.DataProducer{
 		blocksProducer,
@@ -65,6 +66,14 @@ func StartEVMIndexer() {
 
 	if err := engine.IndexersGate().Subscribe("blocks", blocksIndexer); err != nil {
 		log.Fatal().Err(err).Msg("failed to subscribe to blocks topic")
+	}
+
+	if err := engine.IndexersGate().CreateTopic("raw_txs"); err != nil {
+		log.Fatal().Err(err).Msg("failed to create raw_txs topic")
+	}
+
+	if err := engine.IndexersGate().Subscribe("raw_txs", rawTxsIndexer); err != nil {
+		log.Fatal().Err(err).Msg("failed to subscribe to raw_txs topic")
 	}
 
 	if err := engine.Start(ctx); err != nil {
