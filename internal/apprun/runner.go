@@ -56,24 +56,36 @@ func StartEVMIndexer() {
 	blocksIndexer := indexers.NewBlocksIndexer(pgStorage)
 	rawTxsIndexer := indexers.NewRawTxsIndexer(pgStorage)
 
+	uniswapV2Producer := producers.NewUniswapV2PoolsProducer(ethClient, cfg)
+	uniswapV2Indexer := indexers.NewUniswapV2Indexer(pgStorage)
+
 	engine := engine.CreateEngine(cfg, []engine.DataProducer{
 		blocksProducer,
+		uniswapV2Producer,
 	})
 
-	if err := engine.IndexersGate().CreateTopic("blocks"); err != nil {
+	if err := engine.IndexersGate().CreateTopic(producers.BlocksTopicName); err != nil {
 		log.Fatal().Err(err).Msg("failed to create blocks topic")
 	}
 
-	if err := engine.IndexersGate().Subscribe("blocks", blocksIndexer); err != nil {
+	if err := engine.IndexersGate().Subscribe(producers.BlocksTopicName, blocksIndexer); err != nil {
 		log.Fatal().Err(err).Msg("failed to subscribe to blocks topic")
 	}
 
-	if err := engine.IndexersGate().CreateTopic("raw_txs"); err != nil {
+	if err := engine.IndexersGate().CreateTopic(producers.RawTxsTopicName); err != nil {
 		log.Fatal().Err(err).Msg("failed to create raw_txs topic")
 	}
 
-	if err := engine.IndexersGate().Subscribe("raw_txs", rawTxsIndexer); err != nil {
+	if err := engine.IndexersGate().Subscribe(producers.RawTxsTopicName, rawTxsIndexer); err != nil {
 		log.Fatal().Err(err).Msg("failed to subscribe to raw_txs topic")
+	}
+
+	if err := engine.IndexersGate().CreateTopic(producers.UniswapV2PoolsTopicName); err != nil {
+		log.Fatal().Err(err).Msg("failed to create uniswap_v2_pools topic")
+	}
+
+	if err := engine.IndexersGate().Subscribe(producers.UniswapV2PoolsTopicName, uniswapV2Indexer); err != nil {
+		log.Fatal().Err(err).Msg("failed to subscribe to uniswap_v2_pools topic")
 	}
 
 	if err := engine.Start(ctx); err != nil {

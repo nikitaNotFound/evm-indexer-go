@@ -9,6 +9,9 @@ build:
 test:
 	go test -v ./...
 
+abigen:
+	./scripts/abigen.sh
+
 # Install required tools
 install-tools:
 	@echo "Installing golangci-lint..."

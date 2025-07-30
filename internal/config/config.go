@@ -6,12 +6,14 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	"github.com/nikitaNotFound/evm-indexer-go/internal/networks"
 )
 
 type NetworkConfig struct {
-	StartBlock int64  `json:"start_block" validate:"min=0"`
-	EndBlock   int64  `json:"end_block" validate:"min=0"`
-	RpcUrl     string `json:"rpc_url" validate:"required,url"`
+	StartBlock int64            `json:"start_block" validate:"min=0"`
+	EndBlock   int64            `json:"end_block" validate:"min=0"`
+	RpcUrl     string           `json:"rpc_url" validate:"required,url"`
+	Network    networks.Network `json:"network" validate:"required,oneof=eth arbitrum optimism base bnb"`
 }
 
 type PGStorageConfig struct {

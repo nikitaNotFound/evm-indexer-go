@@ -9,7 +9,6 @@ import (
 	"github.com/nikitaNotFound/evm-indexer-go/internal/producers"
 	"github.com/nikitaNotFound/evm-indexer-go/internal/storages/postgres"
 	"github.com/nikitaNotFound/evm-indexer-go/internal/storages/postgres/sqlcgen"
-	"github.com/rs/zerolog/log"
 	"github.com/uptrace/bun/driver/pgdriver"
 )
 
@@ -26,8 +25,6 @@ func (i *RawTxsIndexer) OnDataEvent(
 	topic string,
 	data models.ProducedDataEvent,
 ) error {
-	l := log.With().Str("component", "RawTxsIndexer").Str("method", "OnDataEvent").Logger()
-
 	rawTx, ok := data.Data.(*producers.RawTx)
 	if !ok {
 		return fmt.Errorf("invalid data type: %T", data)
@@ -45,7 +42,6 @@ func (i *RawTxsIndexer) OnDataEvent(
 		MaxGasPrice: rawTx.MaxGasPrice.String(),
 	}); err != nil {
 		if pgerr, ok := err.(pgdriver.Error); ok && pgerr.IntegrityViolation() {
-			l.Warn().Str("tx_hash", rawTx.Hash).Msg("tx already exists")
 			return nil
 		}
 		return fmt.Errorf("failed to add raw tx: %w", err)

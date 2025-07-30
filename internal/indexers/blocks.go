@@ -8,7 +8,6 @@ import (
 	"github.com/nikitaNotFound/evm-indexer-go/internal/producers"
 	"github.com/nikitaNotFound/evm-indexer-go/internal/storages/postgres"
 	"github.com/nikitaNotFound/evm-indexer-go/internal/storages/postgres/sqlcgen"
-	"github.com/rs/zerolog/log"
 	"github.com/uptrace/bun/driver/pgdriver"
 )
 
@@ -25,8 +24,6 @@ func (i *BlocksIndexer) OnDataEvent(
 	topic string,
 	data models.ProducedDataEvent,
 ) error {
-	l := log.With().Str("component", "BlocksIndexer").Str("method", "OnDataEvent").Logger()
-
 	blockInfo, ok := data.Data.(*producers.Block)
 	if !ok {
 		return fmt.Errorf("invalid data type: %T", data)
@@ -38,9 +35,6 @@ func (i *BlocksIndexer) OnDataEvent(
 		Timestamp: blockInfo.Timestamp,
 	}); err != nil {
 		if pgerr, ok := err.(pgdriver.Error); ok && pgerr.IntegrityViolation() {
-			l.Warn().Int64("block_number", blockInfo.Number).
-				Str("block_hash", blockInfo.Hash).
-				Msg("block already exists")
 			return nil
 		}
 		return fmt.Errorf("failed to add block: %w", err)

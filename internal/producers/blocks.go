@@ -3,7 +3,6 @@ package producers
 import (
 	"context"
 	"encoding/hex"
-	"errors"
 	"math/big"
 
 	"github.com/ethereum/go-ethereum/core/types"
@@ -17,10 +16,6 @@ import (
 const (
 	BlocksTopicName = "blocks"
 	RawTxsTopicName = "raw_txs"
-)
-
-var (
-	ErrInvalidBlockRange = errors.New("invalid block range")
 )
 
 type BlocksProducer struct {

@@ -21,3 +21,9 @@ type RawTx struct {
 	GasUsed     string `json:"gas_used"`
 	MaxGasPrice string `json:"max_gas_price"`
 }
+
+type UniswapV2Pool struct {
+	Address string `json:"address"`
+	Token0  string `json:"token0"`
+	Token1  string `json:"token1"`
+}
