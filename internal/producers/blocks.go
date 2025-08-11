@@ -189,8 +189,6 @@ func (p *BlocksProducer) loadBlockInfo(
 		return nil, err
 	}
 
-	l.Info().Int64("block_number", blockNumber).Msg("block info loaded from node")
-
 	return block, nil
 }
 

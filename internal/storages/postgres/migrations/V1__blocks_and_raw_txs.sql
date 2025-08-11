@@ -31,3 +31,15 @@ CREATE TABLE IF NOT EXISTS uniswap_v2_pools (
 
 CREATE INDEX IF NOT EXISTS idx_uniswap_v2_pools_token0 ON uniswap_v2_pools (token0);
 CREATE INDEX IF NOT EXISTS idx_uniswap_v2_pools_token1 ON uniswap_v2_pools (token1);
+
+-- uniswap v3 pools
+CREATE TABLE IF NOT EXISTS uniswap_v3_pools (
+    address VARCHAR(255) PRIMARY KEY,
+    token0 VARCHAR(255) NOT NULL,
+    token1 VARCHAR(255) NOT NULL,
+    fee VARCHAR(255) NOT NULL,
+    tick_spacing VARCHAR(255) NOT NULL
+);
+
+CREATE INDEX IF NOT EXISTS idx_uniswap_v3_pools_token0 ON uniswap_v3_pools (token0);
+CREATE INDEX IF NOT EXISTS idx_uniswap_v3_pools_token1 ON uniswap_v3_pools (token1);

@@ -59,9 +59,13 @@ func StartEVMIndexer() {
 	uniswapV2Producer := producers.NewUniswapV2PoolsProducer(ethClient, cfg)
 	uniswapV2Indexer := indexers.NewUniswapV2Indexer(pgStorage)
 
+	uniswapV3Producer := producers.NewUniswapV3PoolsProducer(ethClient, cfg)
+	uniswapV3Indexer := indexers.NewUniswapV3Indexer(pgStorage)
+
 	engine := engine.CreateEngine(cfg, []engine.DataProducer{
 		blocksProducer,
 		uniswapV2Producer,
+		uniswapV3Producer,
 	})
 
 	if err := engine.IndexersGate().CreateTopic(producers.BlocksTopicName); err != nil {
@@ -86,6 +90,14 @@ func StartEVMIndexer() {
 
 	if err := engine.IndexersGate().Subscribe(producers.UniswapV2PoolsTopicName, uniswapV2Indexer); err != nil {
 		log.Fatal().Err(err).Msg("failed to subscribe to uniswap_v2_pools topic")
+	}
+
+	if err := engine.IndexersGate().CreateTopic(producers.UniswapV3PoolsTopicName); err != nil {
+		log.Fatal().Err(err).Msg("failed to create uniswap_v3_pools topic")
+	}
+
+	if err := engine.IndexersGate().Subscribe(producers.UniswapV3PoolsTopicName, uniswapV3Indexer); err != nil {
+		log.Fatal().Err(err).Msg("failed to subscribe to uniswap_v3_pools topic")
 	}
 
 	if err := engine.Start(ctx); err != nil {

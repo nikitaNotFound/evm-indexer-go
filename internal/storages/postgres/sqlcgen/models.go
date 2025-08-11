@@ -27,3 +27,11 @@ type UniswapV2Pool struct {
 	Token0  string `json:"token0"`
 	Token1  string `json:"token1"`
 }
+
+type UniswapV3Pool struct {
+	Address     string `json:"address"`
+	Token0      string `json:"token0"`
+	Token1      string `json:"token1"`
+	Fee         string `json:"fee"`
+	TickSpacing string `json:"tick_spacing"`
+}

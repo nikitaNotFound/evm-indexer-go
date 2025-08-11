@@ -12,6 +12,7 @@ type Querier interface {
 	AddBlock(ctx context.Context, arg AddBlockParams) error
 	AddRawTx(ctx context.Context, arg AddRawTxParams) error
 	AddUniswapV2Pool(ctx context.Context, arg AddUniswapV2PoolParams) error
+	AddUniswapV3Pool(ctx context.Context, arg AddUniswapV3PoolParams) error
 	GetBlockByNumber(ctx context.Context, number int64) (*Block, error)
 }
 
