@@ -8,7 +8,10 @@ INSERT INTO raw_txs (
     block_number,
     input_data,
     gas_used,
-    max_gas_price
+    gas_price,
+    gas_limit,
+    max_priority_fee,
+    max_fee
 )
 VALUES (
     sqlc.arg(hash)::VARCHAR(255),
@@ -19,5 +22,8 @@ VALUES (
     sqlc.arg(block_number)::BIGINT,
     sqlc.arg(input_data)::VARCHAR(255),
     sqlc.arg(gas_used)::VARCHAR(255),
-    sqlc.arg(max_gas_price)::VARCHAR(255)
+    sqlc.arg(gas_price)::VARCHAR(255),
+    sqlc.arg(gas_limit)::VARCHAR(255),
+    sqlc.arg(max_priority_fee)::VARCHAR(255),
+    sqlc.arg(max_fee)::VARCHAR(255)
 );

@@ -13,6 +13,7 @@ type NetworkConfig struct {
 	StartBlock int64            `json:"start_block" validate:"min=0"`
 	EndBlock   int64            `json:"end_block" validate:"min=0"`
 	RpcUrl     string           `json:"rpc_url" validate:"required,url"`
+	Rps        int              `json:"rps" validate:"min=1"`
 	Network    networks.Network `json:"network" validate:"required,oneof=eth arbitrum optimism base bnb"`
 }
 

@@ -10,27 +10,51 @@ import (
 )
 
 const addBlock = `-- name: AddBlock :exec
-INSERT INTO blocks (number, hash, timestamp) VALUES ($1, $2, $3)
+INSERT INTO blocks (number, hash, timestamp, gas_price, total_fees, total_gas, burnt_fees, fee_recipient)
+VALUES ($1, $2, $3, $4, $5, $6, $7, $8)
 `
 
 type AddBlockParams struct {
-	Number    int64  `json:"number"`
-	Hash      string `json:"hash"`
-	Timestamp int64  `json:"timestamp"`
+	Number       int64  `json:"number"`
+	Hash         string `json:"hash"`
+	Timestamp    int64  `json:"timestamp"`
+	GasPrice     string `json:"gas_price"`
+	TotalFees    string `json:"total_fees"`
+	TotalGas     int64  `json:"total_gas"`
+	BurntFees    string `json:"burnt_fees"`
+	FeeRecipient string `json:"fee_recipient"`
 }
 
 func (q *Queries) AddBlock(ctx context.Context, arg AddBlockParams) error {
-	_, err := q.db.ExecContext(ctx, addBlock, arg.Number, arg.Hash, arg.Timestamp)
+	_, err := q.db.ExecContext(ctx, addBlock,
+		arg.Number,
+		arg.Hash,
+		arg.Timestamp,
+		arg.GasPrice,
+		arg.TotalFees,
+		arg.TotalGas,
+		arg.BurntFees,
+		arg.FeeRecipient,
+	)
 	return err
 }
 
 const getBlockByNumber = `-- name: GetBlockByNumber :one
-SELECT number, hash, timestamp FROM blocks WHERE number = $1
+SELECT number, hash, gas_price, total_fees, total_gas, burnt_fees, fee_recipient, timestamp FROM blocks WHERE number = $1
 `
 
 func (q *Queries) GetBlockByNumber(ctx context.Context, number int64) (*Block, error) {
 	row := q.db.QueryRowContext(ctx, getBlockByNumber, number)
 	var i Block
-	err := row.Scan(&i.Number, &i.Hash, &i.Timestamp)
+	err := row.Scan(
+		&i.Number,
+		&i.Hash,
+		&i.GasPrice,
+		&i.TotalFees,
+		&i.TotalGas,
+		&i.BurntFees,
+		&i.FeeRecipient,
+		&i.Timestamp,
+	)
 	return &i, err
 }

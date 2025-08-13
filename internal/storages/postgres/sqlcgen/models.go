@@ -5,21 +5,29 @@
 package sqlcgen
 
 type Block struct {
-	Number    int64  `json:"number"`
-	Hash      string `json:"hash"`
-	Timestamp int64  `json:"timestamp"`
+	Number       int64  `json:"number"`
+	Hash         string `json:"hash"`
+	GasPrice     string `json:"gas_price"`
+	TotalFees    string `json:"total_fees"`
+	TotalGas     int64  `json:"total_gas"`
+	BurntFees    string `json:"burnt_fees"`
+	FeeRecipient string `json:"fee_recipient"`
+	Timestamp    int64  `json:"timestamp"`
 }
 
 type RawTx struct {
-	Hash        string `json:"hash"`
-	FromAddress string `json:"from_address"`
-	ToAddress   string `json:"to_address"`
-	Value       string `json:"value"`
-	Timestamp   int64  `json:"timestamp"`
-	BlockNumber int64  `json:"block_number"`
-	InputData   string `json:"input_data"`
-	GasUsed     string `json:"gas_used"`
-	MaxGasPrice string `json:"max_gas_price"`
+	Hash           string `json:"hash"`
+	FromAddress    string `json:"from_address"`
+	ToAddress      string `json:"to_address"`
+	Value          string `json:"value"`
+	Timestamp      int64  `json:"timestamp"`
+	BlockNumber    int64  `json:"block_number"`
+	InputData      string `json:"input_data"`
+	GasUsed        string `json:"gas_used"`
+	GasPrice       string `json:"gas_price"`
+	GasLimit       string `json:"gas_limit"`
+	MaxPriorityFee string `json:"max_priority_fee"`
+	MaxFee         string `json:"max_fee"`
 }
 
 type UniswapV2Pool struct {

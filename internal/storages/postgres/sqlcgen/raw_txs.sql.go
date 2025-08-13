@@ -19,7 +19,10 @@ INSERT INTO raw_txs (
     block_number,
     input_data,
     gas_used,
-    max_gas_price
+    gas_price,
+    gas_limit,
+    max_priority_fee,
+    max_fee
 )
 VALUES (
     $1::VARCHAR(255),
@@ -30,20 +33,26 @@ VALUES (
     $6::BIGINT,
     $7::VARCHAR(255),
     $8::VARCHAR(255),
-    $9::VARCHAR(255)
+    $9::VARCHAR(255),
+    $10::VARCHAR(255),
+    $11::VARCHAR(255),
+    $12::VARCHAR(255)
 )
 `
 
 type AddRawTxParams struct {
-	Hash        string `json:"hash"`
-	FromAddress string `json:"from_address"`
-	ToAddress   string `json:"to_address"`
-	Value       string `json:"value"`
-	Timestamp   int64  `json:"timestamp"`
-	BlockNumber int64  `json:"block_number"`
-	InputData   string `json:"input_data"`
-	GasUsed     string `json:"gas_used"`
-	MaxGasPrice string `json:"max_gas_price"`
+	Hash           string `json:"hash"`
+	FromAddress    string `json:"from_address"`
+	ToAddress      string `json:"to_address"`
+	Value          string `json:"value"`
+	Timestamp      int64  `json:"timestamp"`
+	BlockNumber    int64  `json:"block_number"`
+	InputData      string `json:"input_data"`
+	GasUsed        string `json:"gas_used"`
+	GasPrice       string `json:"gas_price"`
+	GasLimit       string `json:"gas_limit"`
+	MaxPriorityFee string `json:"max_priority_fee"`
+	MaxFee         string `json:"max_fee"`
 }
 
 func (q *Queries) AddRawTx(ctx context.Context, arg AddRawTxParams) error {
@@ -56,7 +65,10 @@ func (q *Queries) AddRawTx(ctx context.Context, arg AddRawTxParams) error {
 		arg.BlockNumber,
 		arg.InputData,
 		arg.GasUsed,
-		arg.MaxGasPrice,
+		arg.GasPrice,
+		arg.GasLimit,
+		arg.MaxPriorityFee,
+		arg.MaxFee,
 	)
 	return err
 }

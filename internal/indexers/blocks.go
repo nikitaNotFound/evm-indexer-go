@@ -30,9 +30,14 @@ func (i *BlocksIndexer) OnDataEvent(
 	}
 
 	if err := i.pgStorage.Queries.AddBlock(ctx, sqlcgen.AddBlockParams{
-		Number:    blockInfo.Number,
-		Hash:      blockInfo.Hash,
-		Timestamp: blockInfo.Timestamp,
+		Number:       blockInfo.Number,
+		Hash:         blockInfo.Hash,
+		Timestamp:    blockInfo.Timestamp,
+		GasPrice:     blockInfo.GasPrice,
+		TotalFees:    blockInfo.TotalFees,
+		TotalGas:     int64(blockInfo.TotalGas),
+		BurntFees:    blockInfo.BurntFees,
+		FeeRecipient: blockInfo.FeeRecipient,
 	}); err != nil {
 		if pgerr, ok := err.(pgdriver.Error); ok && pgerr.IntegrityViolation() {
 			return nil

@@ -8,25 +8,31 @@ import (
 
 	"github.com/nikitaNotFound/evm-indexer-go/internal/config"
 	"github.com/nikitaNotFound/evm-indexer-go/internal/engine/models"
+	"github.com/nikitaNotFound/evm-indexer-go/pkg/smartlim"
 )
 
 type Engine struct {
-	dataProducers []DataProducer
-	cfg           *config.Config
-	indexersGate  *IndexersGate
+	dataProducers   []DataProducer
+	cfg             *config.Config
+	indexersGate    *IndexersGate
+	providerLimiter *smartlim.SmartLimiter
 }
 
 type EngineCtx struct {
 	Engine        *Engine
 	Ctx           context.Context
 	BroadcastData func(ctx context.Context, topic string, data []models.ProducedDataEvent) error
+	Limiter       *smartlim.SmartLimiter
 }
 
 func CreateEngine(cfg *config.Config, dp []DataProducer) Engine {
+	limiter := smartlim.StartSmartLimiter(cfg.NetworkConfig.Rps, 1)
+
 	return Engine{
-		dataProducers: dp,
-		cfg:           cfg,
-		indexersGate:  NewIndexersGate(),
+		dataProducers:   dp,
+		cfg:             cfg,
+		indexersGate:    NewIndexersGate(),
+		providerLimiter: limiter,
 	}
 }
 
@@ -58,6 +64,7 @@ func (e *Engine) initialSync(ctx context.Context) error {
 		Engine:        e,
 		Ctx:           ctx,
 		BroadcastData: e.indexersGate.BroadcastDataEvent,
+		Limiter:       e.providerLimiter,
 	}
 
 	for _, p := range e.dataProducers {

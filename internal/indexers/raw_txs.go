@@ -31,15 +31,18 @@ func (i *RawTxsIndexer) OnDataEvent(
 	}
 
 	if err := i.pgStorage.Queries.AddRawTx(ctx, sqlcgen.AddRawTxParams{
-		Hash:        rawTx.Hash,
-		FromAddress: rawTx.FromAddress,
-		ToAddress:   rawTx.ToAddress,
-		Value:       rawTx.Value.String(),
-		Timestamp:   rawTx.Timestamp,
-		BlockNumber: rawTx.BlockNumber,
-		InputData:   rawTx.InputData,
-		GasUsed:     strconv.FormatUint(rawTx.GasUsed, 10),
-		MaxGasPrice: rawTx.MaxGasPrice.String(),
+		Hash:           rawTx.Hash,
+		FromAddress:    rawTx.FromAddress,
+		ToAddress:      rawTx.ToAddress,
+		Value:          rawTx.Value.String(),
+		Timestamp:      rawTx.Timestamp,
+		BlockNumber:    rawTx.BlockNumber,
+		InputData:      rawTx.InputData,
+		GasUsed:        strconv.FormatUint(rawTx.GasUsed, 10),
+		GasPrice:       rawTx.GasPrice.String(),
+		GasLimit:       strconv.FormatUint(rawTx.GasLimit, 10),
+		MaxPriorityFee: rawTx.MaxPriorityFee.String(),
+		MaxFee:         rawTx.MaxFee.String(),
 	}); err != nil {
 		if pgerr, ok := err.(pgdriver.Error); ok && pgerr.IntegrityViolation() {
 			return nil
