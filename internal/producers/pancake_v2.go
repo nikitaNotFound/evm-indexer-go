@@ -19,7 +19,7 @@ const (
 type PancakeV2PoolsProducer struct {
 	ethClient      *ethclient.Client
 	factoryAddress string
-	factoryAbi     *abigen.PancakeV2
+	factoryAbi     *abigen.UniswapV2Factory
 	cfg            *config.Config
 }
 
@@ -34,7 +34,7 @@ func NewPancakeV2PoolsProducer(
 		Str("network", string(cfg.NetworkConfig.Network)).
 		Msg("creating PancakeV2 producer")
 
-	factoryAbi, err := abigen.NewPancakeV2(common.HexToAddress(factoryAddress), ethClient)
+	factoryAbi, err := abigen.NewUniswapV2Factory(common.HexToAddress(factoryAddress), ethClient)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to create pancake v2 factory")
 	}
