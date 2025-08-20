@@ -10,11 +10,17 @@ import (
 
 type Querier interface {
 	AddBlock(ctx context.Context, arg AddBlockParams) error
+	AddPancakeV2Pool(ctx context.Context, arg AddPancakeV2PoolParams) error
+	AddPancakeV3Pool(ctx context.Context, arg AddPancakeV3PoolParams) error
 	AddRawTx(ctx context.Context, arg AddRawTxParams) error
 	AddUniswapV2Pool(ctx context.Context, arg AddUniswapV2PoolParams) error
 	AddUniswapV3Pool(ctx context.Context, arg AddUniswapV3PoolParams) error
+	CountPancakeV2Pools(ctx context.Context) (int64, error)
+	CountPancakeV3Pools(ctx context.Context) (int64, error)
 	CountUniswapV2Pools(ctx context.Context) (int64, error)
 	CountUniswapV3Pools(ctx context.Context) (int64, error)
+	GetAllPancakeV2Pools(ctx context.Context, arg GetAllPancakeV2PoolsParams) ([]*PancakeV2Pool, error)
+	GetAllPancakeV3Pools(ctx context.Context, arg GetAllPancakeV3PoolsParams) ([]*PancakeV3Pool, error)
 	GetAllUniswapV2Pools(ctx context.Context, arg GetAllUniswapV2PoolsParams) ([]*UniswapV2Pool, error)
 	GetAllUniswapV3Pools(ctx context.Context, arg GetAllUniswapV3PoolsParams) ([]*UniswapV3Pool, error)
 	GetBlockByNumber(ctx context.Context, number int64) (*Block, error)

@@ -5,5 +5,5 @@ import (
 )
 
 func main() {
-	apprun.StrtEVMIndexer()
+	apprun.StartEVMIndexer()
 }

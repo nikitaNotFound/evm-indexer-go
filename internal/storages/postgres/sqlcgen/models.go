@@ -15,6 +15,20 @@ type Block struct {
 	Timestamp    int64  `json:"timestamp"`
 }
 
+type PancakeV2Pool struct {
+	Address string `json:"address"`
+	Token0  string `json:"token0"`
+	Token1  string `json:"token1"`
+}
+
+type PancakeV3Pool struct {
+	Address     string `json:"address"`
+	Token0      string `json:"token0"`
+	Token1      string `json:"token1"`
+	Fee         string `json:"fee"`
+	TickSpacing string `json:"tick_spacing"`
+}
+
 type RawTx struct {
 	Hash           string `json:"hash"`
 	FromAddress    string `json:"from_address"`

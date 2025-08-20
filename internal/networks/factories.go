@@ -12,6 +12,18 @@ const (
 	OptimismUniswapV3FactoryAddress = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
 	BaseUniswapV3FactoryAddress     = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
 	BNBUniswapV3FactoryAddress      = "0x1F98431c8aD98523631AE4a59f267346ea31F984"
+
+	ETHPancakeV2FactoryAddress      = "0x1097053Fd2ea711dad45caCcc45EfF7548fCB362"
+	ArbitrumPancakeV2FactoryAddress = "0x02a84c1b3BBD7401a5f7fa98a384EBC70bB5749E"
+	OptimismPancakeV2FactoryAddress = "0x02a84c1b3BBD7401a5f7fa98a384EBC70bB5749E"
+	BasePancakeV2FactoryAddress     = "0x02a84c1b3BBD7401a5f7fa98a384EBC70bB5749E"
+	BNBPancakeV2FactoryAddress      = "0xcA143Ce32Fe78f1f7019d7d551a6402fC5350c73"
+
+	ETHPancakeV3FactoryAddress      = "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865"
+	ArbitrumPancakeV3FactoryAddress = "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865"
+	OptimismPancakeV3FactoryAddress = "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865"
+	BasePancakeV3FactoryAddress     = "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865"
+	BNBPancakeV3FactoryAddress      = "0x0BFbCF9fa4f9C56B0F40a671Ad40E0805A091865"
 )
 
 func GetUniswapV2FactoryAddress(network Network) string {
@@ -43,6 +55,40 @@ func GetUniswapV3FactoryAddress(network Network) string {
 		return BaseUniswapV3FactoryAddress
 	case BNB:
 		return BNBUniswapV3FactoryAddress
+	default:
+		return ""
+	}
+}
+
+func GetPancakeV2FactoryAddress(network Network) string {
+	switch network {
+	case ETH:
+		return ETHPancakeV2FactoryAddress
+	case Arbitrum:
+		return ArbitrumPancakeV2FactoryAddress
+	case Optimism:
+		return OptimismPancakeV2FactoryAddress
+	case Base:
+		return BasePancakeV2FactoryAddress
+	case BNB:
+		return BNBPancakeV2FactoryAddress
+	default:
+		return ""
+	}
+}
+
+func GetPancakeV3FactoryAddress(network Network) string {
+	switch network {
+	case ETH:
+		return ETHPancakeV3FactoryAddress
+	case Arbitrum:
+		return ArbitrumPancakeV3FactoryAddress
+	case Optimism:
+		return OptimismPancakeV3FactoryAddress
+	case Base:
+		return BasePancakeV3FactoryAddress
+	case BNB:
+		return BNBPancakeV3FactoryAddress
 	default:
 		return ""
 	}

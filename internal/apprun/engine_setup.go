@@ -21,10 +21,18 @@ func setupEngine(cfg *config.Config, ethClient *ethclient.Client, pgStorage *pos
 	uniswapV3Producer := producers.NewUniswapV3PoolsProducer(ethClient, cfg)
 	uniswapV3Indexer := indexers.NewUniswapV3Indexer(pgStorage)
 
+	pancakeV2Producer := producers.NewPancakeV2PoolsProducer(ethClient, cfg)
+	pancakeV2Indexer := indexers.NewPancakeV2Indexer(pgStorage)
+
+	pancakeV3Producer := producers.NewPancakeV3PoolsProducer(ethClient, cfg)
+	pancakeV3Indexer := indexers.NewPancakeV3Indexer(pgStorage)
+
 	engine := engine.CreateEngine(cfg, []engine.DataProducer{
 		blocksProducer,
 		uniswapV2Producer,
 		uniswapV3Producer,
+		pancakeV2Producer,
+		pancakeV3Producer,
 	})
 
 	if err := engine.IndexersGate().CreateTopic(producers.BlocksTopicName); err != nil {
@@ -57,6 +65,25 @@ func setupEngine(cfg *config.Config, ethClient *ethclient.Client, pgStorage *pos
 
 	if err := engine.IndexersGate().Subscribe(producers.UniswapV3PoolsTopicName, uniswapV3Indexer); err != nil {
 		log.Fatal().Err(err).Msg("failed to subscribe to uniswap_v3_pools topic")
+	}
+
+	if err := engine.IndexersGate().CreateTopic(producers.PancakeV2PoolsTopicName); err != nil {
+		log.Fatal().Err(err).Msg("failed to create pancake_v2_pools topic")
+	}
+
+	if err := engine.IndexersGate().Subscribe(
+		producers.PancakeV2PoolsTopicName,
+		pancakeV2Indexer,
+	); err != nil {
+		log.Fatal().Err(err).Msg("failed to subscribe to pancake_v2_pools topic")
+	}
+
+	if err := engine.IndexersGate().CreateTopic(producers.PancakeV3PoolsTopicName); err != nil {
+		log.Fatal().Err(err).Msg("failed to create pancake_v3_pools topic")
+	}
+
+	if err := engine.IndexersGate().Subscribe(producers.PancakeV3PoolsTopicName, pancakeV3Indexer); err != nil {
+		log.Fatal().Err(err).Msg("failed to subscribe to pancake_v3_pools topic")
 	}
 
 	return &engine
