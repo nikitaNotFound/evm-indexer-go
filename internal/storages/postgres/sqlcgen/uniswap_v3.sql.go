@@ -32,3 +32,54 @@ func (q *Queries) AddUniswapV3Pool(ctx context.Context, arg AddUniswapV3PoolPara
 	)
 	return err
 }
+
+const countUniswapV3Pools = `-- name: CountUniswapV3Pools :one
+SELECT COUNT(*) FROM uniswap_v3_pools
+`
+
+func (q *Queries) CountUniswapV3Pools(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUniswapV3Pools)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getAllUniswapV3Pools = `-- name: GetAllUniswapV3Pools :many
+SELECT address, token0, token1, fee, tick_spacing FROM uniswap_v3_pools
+ORDER BY address
+LIMIT $1 OFFSET $2
+`
+
+type GetAllUniswapV3PoolsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) GetAllUniswapV3Pools(ctx context.Context, arg GetAllUniswapV3PoolsParams) ([]*UniswapV3Pool, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUniswapV3Pools, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UniswapV3Pool
+	for rows.Next() {
+		var i UniswapV3Pool
+		if err := rows.Scan(
+			&i.Address,
+			&i.Token0,
+			&i.Token1,
+			&i.Fee,
+			&i.TickSpacing,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

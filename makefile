@@ -1,3 +1,6 @@
+OPENAPI_SPEC=spec/openapi.yaml
+OPENAPI_GEN_DIR=internal/apigen
+
 .PHONY: run build test lint fmt install-tools clean check-line-length
 
 run:
@@ -8,6 +11,13 @@ build:
 
 test:
 	go test -v ./...
+
+.PHONY: gen-api
+gen-api: $(OPENAPI_SPEC)
+	@echo "Generating API code from OpenAPI specification..."
+	@mkdir -p $(OPENAPI_GEN_DIR)
+	oapi-codegen -generate types,echo,spec -package apigen $(OPENAPI_SPEC) > $(OPENAPI_GEN_DIR)/api.gen.go
+
 
 abigen:
 	./scripts/abigen.sh

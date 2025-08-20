@@ -1,0 +1,376 @@
+openapi: 3.0.0
+info:
+  title: EVM Indexer API
+  description: API for accessing indexed DeFi data from EVM networks
+  version: 0.1.0
+  contact:
+    name: EVM Indexer
+
+servers:
+  - url: http://localhost:8080
+    description: Development server
+
+paths:
+  /blocks/{number}:
+    get:
+      summary: Get block data by number
+      description: Retrieves block information including timestamps, gas data, fees and builder info
+      operationId: getBlockByNumber
+      parameters:
+        - name: number
+          in: path
+          required: true
+          description: Block number to retrieve
+          schema:
+            type: integer
+            format: int64
+            minimum: 0
+      responses:
+        "200":
+          description: Block data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Block"
+        "404":
+          description: Block not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "400":
+          description: Invalid block number
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /transactions/{hash}:
+    get:
+      summary: Get transaction data by hash
+      description: Retrieves transaction information including addresses, value, gas data and calldata
+      operationId: getTransactionByHash
+      parameters:
+        - name: hash
+          in: path
+          required: true
+          description: Transaction hash (0x prefixed hex string)
+          schema:
+            type: string
+            pattern: "^0x[a-fA-F0-9]{64}$"
+      responses:
+        "200":
+          description: Transaction data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/RawTx"
+        "404":
+          description: Transaction not found
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "400":
+          description: Invalid transaction hash format
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+  /pools:
+    get:
+      summary: Get all indexed pools
+      description: Retrieves all indexed Uniswap V2 and V3 pools with their basic information
+      operationId: getAllPools
+      parameters:
+        - name: limit
+          in: query
+          required: false
+          description: Maximum number of pools to return
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+        - name: offset
+          in: query
+          required: false
+          description: Number of pools to skip for pagination
+          schema:
+            type: integer
+            minimum: 0
+            default: 0
+      responses:
+        "200":
+          description: Pools data retrieved successfully
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/PoolsResponse"
+        "400":
+          description: Invalid query parameters
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+        "500":
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Error"
+
+components:
+  schemas:
+    Block:
+      type: object
+      description: Block information from EVM network
+      properties:
+        number:
+          type: integer
+          format: int64
+          description: Block number
+          example: 18500000
+        hash:
+          type: string
+          description: Block hash (0x prefixed hex string)
+          example: "0x1234567890abcdef1234567890abcdef1234567890abcdef1234567890abcdef"
+        timestamp:
+          type: integer
+          format: int64
+          description: Block timestamp (Unix timestamp)
+          example: 1699200000
+        gas_price:
+          type: string
+          description: Base gas price for the block (in wei)
+          example: "20000000000"
+        burnt_fees:
+          type: string
+          description: Total burnt fees in the block (in wei)
+          example: "1500000000000000000"
+        total_fees:
+          type: string
+          description: Total fees paid in the block (in wei)
+          example: "2000000000000000000"
+        total_gas:
+          type: integer
+          format: uint64
+          description: Total gas used in the block
+          example: 15000000
+        fee_recipient:
+          type: string
+          description: Address that receives block rewards (0x prefixed hex string)
+          example: "0x1234567890123456789012345678901234567890"
+      required:
+        - number
+        - hash
+        - timestamp
+        - gas_price
+        - burnt_fees
+        - total_fees
+        - total_gas
+        - fee_recipient
+
+    RawTx:
+      type: object
+      description: Raw transaction data from EVM network
+      properties:
+        hash:
+          type: string
+          description: Transaction hash (0x prefixed hex string)
+          example: "0xabcdef1234567890abcdef1234567890abcdef1234567890abcdef1234567890"
+        from_address:
+          type: string
+          description: Sender address (0x prefixed hex string)
+          example: "0x1234567890123456789012345678901234567890"
+        to_address:
+          type: string
+          description: Recipient address (0x prefixed hex string, empty for contract creation)
+          example: "0x0987654321098765432109876543210987654321"
+        value:
+          type: string
+          description: Transaction value in wei
+          example: "1000000000000000000"
+        timestamp:
+          type: integer
+          format: int64
+          description: Transaction timestamp (Unix timestamp)
+          example: 1699200000
+        block_number:
+          type: integer
+          format: int64
+          description: Block number containing this transaction
+          example: 18500000
+        input_data:
+          type: string
+          description: Transaction input data (hex encoded)
+          example: "a9059cbb000000000000000000000000..."
+        gas_used:
+          type: integer
+          format: uint64
+          description: Gas used by this transaction
+          example: 21000
+        gas_price:
+          type: string
+          description: Gas price paid (in wei)
+          example: "20000000000"
+        gas_limit:
+          type: integer
+          format: uint64
+          description: Gas limit for this transaction
+          example: 21000
+        max_priority_fee:
+          type: string
+          description: Maximum priority fee per gas (in wei)
+          example: "2000000000"
+        max_fee:
+          type: string
+          description: Maximum fee per gas (in wei)
+          example: "30000000000"
+      required:
+        - hash
+        - from_address
+        - to_address
+        - value
+        - timestamp
+        - block_number
+        - input_data
+        - gas_used
+        - gas_price
+        - gas_limit
+        - max_priority_fee
+        - max_fee
+
+    UniswapV2Pool:
+      type: object
+      description: Uniswap V2 pool information
+      properties:
+        address:
+          type: string
+          description: Pool contract address (0x prefixed hex string)
+          example: "0x1234567890123456789012345678901234567890"
+        token0:
+          type: string
+          description: First token address (0x prefixed hex string)
+          example: "0xA0b86a33E6411a3bBea85718EBb3c47b2f70ea45"
+        token1:
+          type: string
+          description: Second token address (0x prefixed hex string)
+          example: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        version:
+          type: string
+          enum: [v2]
+          description: Uniswap version
+          example: "v2"
+      required:
+        - address
+        - token0
+        - token1
+        - version
+
+    UniswapV3Pool:
+      type: object
+      description: Uniswap V3 pool information
+      properties:
+        address:
+          type: string
+          description: Pool contract address (0x prefixed hex string)
+          example: "0x1234567890123456789012345678901234567890"
+        token0:
+          type: string
+          description: First token address (0x prefixed hex string)
+          example: "0xA0b86a33E6411a3bBea85718EBb3c47b2f70ea45"
+        token1:
+          type: string
+          description: Second token address (0x prefixed hex string)
+          example: "0xC02aaA39b223FE8D0A0e5C4F27eAD9083C756Cc2"
+        fee:
+          type: string
+          description: Pool fee (in basis points)
+          example: "3000"
+        tick_spacing:
+          type: string
+          description: Tick spacing for the pool
+          example: "60"
+        version:
+          type: string
+          enum: [v3]
+          description: Uniswap version
+          example: "v3"
+      required:
+        - address
+        - token0
+        - token1
+        - fee
+        - tick_spacing
+        - version
+
+    Pool:
+      oneOf:
+        - $ref: "#/components/schemas/UniswapV2Pool"
+        - $ref: "#/components/schemas/UniswapV3Pool"
+      discriminator:
+        propertyName: version
+        mapping:
+          v2: "#/components/schemas/UniswapV2Pool"
+          v3: "#/components/schemas/UniswapV3Pool"
+
+    PoolsResponse:
+      type: object
+      description: Response containing pool data with pagination info
+      properties:
+        pools:
+          type: array
+          items:
+            $ref: "#/components/schemas/Pool"
+          description: Array of pool objects
+        total:
+          type: integer
+          description: Total number of pools available
+          example: 1500
+        limit:
+          type: integer
+          description: Number of pools returned in this response
+          example: 100
+        offset:
+          type: integer
+          description: Number of pools skipped
+          example: 0
+      required:
+        - pools
+        - total
+        - limit
+        - offset
+
+    Error:
+      type: object
+      description: Error response
+      properties:
+        error:
+          type: string
+          description: Error message
+          example: "Block not found"
+        code:
+          type: string
+          description: Error code
+          example: "BLOCK_NOT_FOUND"
+        details:
+          type: string
+          description: Additional error details
+          example: "Block with number 999999999 does not exist"
+      required:
+        - error
+        - code

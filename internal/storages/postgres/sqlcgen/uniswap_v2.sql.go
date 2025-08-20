@@ -23,3 +23,48 @@ func (q *Queries) AddUniswapV2Pool(ctx context.Context, arg AddUniswapV2PoolPara
 	_, err := q.db.ExecContext(ctx, addUniswapV2Pool, arg.Address, arg.Token0, arg.Token1)
 	return err
 }
+
+const countUniswapV2Pools = `-- name: CountUniswapV2Pools :one
+SELECT COUNT(*) FROM uniswap_v2_pools
+`
+
+func (q *Queries) CountUniswapV2Pools(ctx context.Context) (int64, error) {
+	row := q.db.QueryRowContext(ctx, countUniswapV2Pools)
+	var count int64
+	err := row.Scan(&count)
+	return count, err
+}
+
+const getAllUniswapV2Pools = `-- name: GetAllUniswapV2Pools :many
+SELECT address, token0, token1 FROM uniswap_v2_pools
+ORDER BY address
+LIMIT $1 OFFSET $2
+`
+
+type GetAllUniswapV2PoolsParams struct {
+	Limit  int32 `json:"limit"`
+	Offset int32 `json:"offset"`
+}
+
+func (q *Queries) GetAllUniswapV2Pools(ctx context.Context, arg GetAllUniswapV2PoolsParams) ([]*UniswapV2Pool, error) {
+	rows, err := q.db.QueryContext(ctx, getAllUniswapV2Pools, arg.Limit, arg.Offset)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []*UniswapV2Pool
+	for rows.Next() {
+		var i UniswapV2Pool
+		if err := rows.Scan(&i.Address, &i.Token0, &i.Token1); err != nil {
+			return nil, err
+		}
+		items = append(items, &i)
+	}
+	if err := rows.Close(); err != nil {
+		return nil, err
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}

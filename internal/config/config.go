@@ -9,6 +9,11 @@ import (
 	"github.com/nikitaNotFound/evm-indexer-go/internal/networks"
 )
 
+type HTTPServerConfig struct {
+	Port int    `json:"port" validate:"required"`
+	Host string `json:"host" validate:"required"`
+}
+
 type NetworkConfig struct {
 	StartBlock int64            `json:"start_block" validate:"min=0"`
 	EndBlock   int64            `json:"end_block" validate:"min=0"`
@@ -29,8 +34,9 @@ type PGStorageConfig struct {
 }
 
 type Config struct {
-	NetworkConfig NetworkConfig   `json:"network_config" validate:"required"`
-	PGStorage     PGStorageConfig `json:"pg_storage_config" validate:"required"`
+	NetworkConfig NetworkConfig    `json:"network" validate:"required"`
+	PGStorage     PGStorageConfig  `json:"pg_storage" validate:"required"`
+	HTTPServer    HTTPServerConfig `json:"http_server" validate:"required"`
 	isDebug       bool
 }
 

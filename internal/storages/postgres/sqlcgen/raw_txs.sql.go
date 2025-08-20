@@ -72,3 +72,27 @@ func (q *Queries) AddRawTx(ctx context.Context, arg AddRawTxParams) error {
 	)
 	return err
 }
+
+const getTransactionByHash = `-- name: GetTransactionByHash :one
+SELECT hash, from_address, to_address, value, timestamp, block_number, input_data, gas_used, gas_price, gas_limit, max_priority_fee, max_fee FROM raw_txs WHERE hash = $1
+`
+
+func (q *Queries) GetTransactionByHash(ctx context.Context, hash string) (*RawTx, error) {
+	row := q.db.QueryRowContext(ctx, getTransactionByHash, hash)
+	var i RawTx
+	err := row.Scan(
+		&i.Hash,
+		&i.FromAddress,
+		&i.ToAddress,
+		&i.Value,
+		&i.Timestamp,
+		&i.BlockNumber,
+		&i.InputData,
+		&i.GasUsed,
+		&i.GasPrice,
+		&i.GasLimit,
+		&i.MaxPriorityFee,
+		&i.MaxFee,
+	)
+	return &i, err
+}

@@ -1,3 +1,6 @@
+-- name: GetTransactionByHash :one
+SELECT * FROM raw_txs WHERE hash = $1;
+
 -- name: AddRawTx :exec
 INSERT INTO raw_txs (
     hash,

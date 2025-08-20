@@ -13,7 +13,12 @@ type Querier interface {
 	AddRawTx(ctx context.Context, arg AddRawTxParams) error
 	AddUniswapV2Pool(ctx context.Context, arg AddUniswapV2PoolParams) error
 	AddUniswapV3Pool(ctx context.Context, arg AddUniswapV3PoolParams) error
+	CountUniswapV2Pools(ctx context.Context) (int64, error)
+	CountUniswapV3Pools(ctx context.Context) (int64, error)
+	GetAllUniswapV2Pools(ctx context.Context, arg GetAllUniswapV2PoolsParams) ([]*UniswapV2Pool, error)
+	GetAllUniswapV3Pools(ctx context.Context, arg GetAllUniswapV3PoolsParams) ([]*UniswapV3Pool, error)
 	GetBlockByNumber(ctx context.Context, number int64) (*Block, error)
+	GetTransactionByHash(ctx context.Context, hash string) (*RawTx, error)
 }
 
 var _ Querier = (*Queries)(nil)
