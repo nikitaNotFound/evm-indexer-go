@@ -44,6 +44,20 @@ type RawTx struct {
 	MaxFee         string `json:"max_fee"`
 }
 
+type SushiswapV2Pool struct {
+	Address string `json:"address"`
+	Token0  string `json:"token0"`
+	Token1  string `json:"token1"`
+}
+
+type SushiswapV3Pool struct {
+	Address     string `json:"address"`
+	Token0      string `json:"token0"`
+	Token1      string `json:"token1"`
+	Fee         string `json:"fee"`
+	TickSpacing string `json:"tick_spacing"`
+}
+
 type UniswapV2Pool struct {
 	Address string `json:"address"`
 	Token0  string `json:"token0"`

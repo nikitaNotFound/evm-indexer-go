@@ -13,14 +13,20 @@ type Querier interface {
 	AddPancakeV2Pool(ctx context.Context, arg AddPancakeV2PoolParams) error
 	AddPancakeV3Pool(ctx context.Context, arg AddPancakeV3PoolParams) error
 	AddRawTx(ctx context.Context, arg AddRawTxParams) error
+	AddSushiSwapV2Pool(ctx context.Context, arg AddSushiSwapV2PoolParams) error
+	AddSushiSwapV3Pool(ctx context.Context, arg AddSushiSwapV3PoolParams) error
 	AddUniswapV2Pool(ctx context.Context, arg AddUniswapV2PoolParams) error
 	AddUniswapV3Pool(ctx context.Context, arg AddUniswapV3PoolParams) error
 	CountPancakeV2Pools(ctx context.Context) (int64, error)
 	CountPancakeV3Pools(ctx context.Context) (int64, error)
+	CountSushiSwapV2Pools(ctx context.Context) (int64, error)
+	CountSushiSwapV3Pools(ctx context.Context) (int64, error)
 	CountUniswapV2Pools(ctx context.Context) (int64, error)
 	CountUniswapV3Pools(ctx context.Context) (int64, error)
 	GetAllPancakeV2Pools(ctx context.Context, arg GetAllPancakeV2PoolsParams) ([]*PancakeV2Pool, error)
 	GetAllPancakeV3Pools(ctx context.Context, arg GetAllPancakeV3PoolsParams) ([]*PancakeV3Pool, error)
+	GetAllSushiSwapV2Pools(ctx context.Context, arg GetAllSushiSwapV2PoolsParams) ([]*SushiswapV2Pool, error)
+	GetAllSushiSwapV3Pools(ctx context.Context, arg GetAllSushiSwapV3PoolsParams) ([]*SushiswapV3Pool, error)
 	GetAllUniswapV2Pools(ctx context.Context, arg GetAllUniswapV2PoolsParams) ([]*UniswapV2Pool, error)
 	GetAllUniswapV3Pools(ctx context.Context, arg GetAllUniswapV3PoolsParams) ([]*UniswapV3Pool, error)
 	GetBlockByNumber(ctx context.Context, number int64) (*Block, error)
